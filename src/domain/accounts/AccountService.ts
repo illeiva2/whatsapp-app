@@ -1,6 +1,6 @@
-import { prisma } from '@/db/client';
+import { prisma } from '../../db/client';
 import { Account, Transaction, TransactionType } from '@prisma/client';
-import { logger } from '@/utils/logger';
+import { logger } from '../../utils/logger';
 
 export interface AccountSummary {
   account: Account;

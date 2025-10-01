@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 
 export interface WhatsAppButton {
   id: string;

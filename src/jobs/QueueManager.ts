@@ -1,6 +1,6 @@
 import { Queue, Worker, Job } from 'bullmq';
 import IORedis from 'ioredis';
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 
 export interface JobData {
   [key: string]: any;

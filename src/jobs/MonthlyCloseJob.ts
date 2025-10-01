@@ -1,10 +1,10 @@
 import { Job } from 'bullmq';
-import { prisma } from '@/db/client';
-import { AccountService } from '@/domain/accounts/AccountService';
-import { StatementService } from '@/domain/statements/StatementService';
-import { WhatsAppClient } from '@/services/WhatsAppClient';
-import { WHATSAPP_COPYS, formatCurrency, formatDate } from '@/domain/whatsapp/copy';
-import { logger } from '@/utils/logger';
+import { prisma } from '../db/client';
+import { AccountService } from '../domain/accounts/AccountService';
+import { StatementService } from '../domain/statements/StatementService';
+import { WhatsAppClient } from '../services/WhatsAppClient';
+import { WHATSAPP_COPYS, formatCurrency, formatDate } from '../domain/whatsapp/copy';
+import { logger } from '../utils/logger';
 
 export interface MonthlyCloseJobData {
   accountId?: string;

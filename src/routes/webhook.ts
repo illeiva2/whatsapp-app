@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { ConversationFlow } from '@/services/ConversationFlow';
-import { logger } from '@/utils/logger';
-import { sanitizeForLog } from '@/utils/logger';
+import { ConversationFlow } from '../services/ConversationFlow';
+import { logger } from '../utils/logger';
+import { sanitizeForLog } from '../utils/logger';
 
 const router = Router();
 const conversationFlow = new ConversationFlow();

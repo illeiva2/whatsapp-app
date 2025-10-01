@@ -3,14 +3,14 @@ import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
-import { logger } from '@/utils/logger';
-import { QueueManager } from '@/jobs/QueueManager';
-import { MonthlyCloseJob } from '@/jobs/MonthlyCloseJob';
-import { ImportJob } from '@/jobs/ImportJob';
+import { logger } from './utils/logger';
+import { QueueManager } from './jobs/QueueManager';
+import { MonthlyCloseJob } from './jobs/MonthlyCloseJob';
+import { ImportJob } from './jobs/ImportJob';
 
 // Importar rutas
-import webhookRoutes from '@/routes/webhook';
-import adminRoutes from '@/routes/admin';
+import webhookRoutes from './routes/webhook';
+import adminRoutes from './routes/admin';
 
 // Cargar variables de entorno
 dotenv.config();

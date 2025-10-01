@@ -1,13 +1,13 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import multer from 'multer';
-import { QueueManager } from '@/jobs/QueueManager';
-import { EmployeeService } from '@/domain/employees/EmployeeService';
-import { AccountService } from '@/domain/accounts/AccountService';
-import { StatementService } from '@/domain/statements/StatementService';
-import { TicketService } from '@/domain/tickets/TicketService';
-import { logger } from '@/utils/logger';
-import { sanitizeForLog } from '@/utils/logger';
+import { QueueManager } from '../jobs/QueueManager';
+import { EmployeeService } from '../domain/employees/EmployeeService';
+import { AccountService } from '../domain/accounts/AccountService';
+import { StatementService } from '../domain/statements/StatementService';
+import { TicketService } from '../domain/tickets/TicketService';
+import { logger } from '../utils/logger';
+import { sanitizeForLog } from '../utils/logger';
 
 const router = Router();
 const queueManager = new QueueManager();

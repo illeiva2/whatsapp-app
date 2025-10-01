@@ -1,7 +1,7 @@
 import PDFDocument from 'pdfkit';
-import { StatementWithAccount } from '@/domain/statements/StatementService';
-import { formatCurrency, formatDate } from '@/domain/whatsapp/copy';
-import { logger } from '@/utils/logger';
+import { StatementWithAccount } from '../domain/statements/StatementService';
+import { formatCurrency, formatDate } from '../domain/whatsapp/copy';
+import { logger } from '../utils/logger';
 import * as fs from 'fs';
 import * as path from 'path';
 

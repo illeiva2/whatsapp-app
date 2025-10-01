@@ -1,9 +1,9 @@
 import { Job } from 'bullmq';
-import { prisma } from '@/db/client';
-import { EmployeeService } from '@/domain/employees/EmployeeService';
-import { TransactionService } from '@/domain/transactions/TransactionService';
+import { prisma } from '../db/client';
+import { EmployeeService } from '../domain/employees/EmployeeService';
+import { TransactionService } from '../domain/transactions/TransactionService';
 import { TransactionType } from '@prisma/client';
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 import * as fs from 'fs';
 import csv from 'csv-parser';
 

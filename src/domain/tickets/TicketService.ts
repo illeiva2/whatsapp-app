@@ -1,6 +1,6 @@
-import { prisma } from '@/db/client';
+import { prisma } from '../../db/client';
 import { Ticket, TicketTopic, TicketStatus } from '@prisma/client';
-import { logger } from '@/utils/logger';
+import { logger } from '../../utils/logger';
 
 export interface CreateTicketData {
   employeeId: string;

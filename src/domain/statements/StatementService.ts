@@ -1,7 +1,7 @@
-import { prisma } from '@/db/client';
+import { prisma } from '../../db/client';
 import { Statement } from '@prisma/client';
-import { logger } from '@/utils/logger';
-import { PDFGenerator } from '@/services/PDFGenerator';
+import { logger } from '../../utils/logger';
+import { PDFGenerator } from '../../services/PDFGenerator';
 
 export interface CreateStatementData {
   accountId: string;

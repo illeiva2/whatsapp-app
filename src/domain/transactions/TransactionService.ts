@@ -1,6 +1,6 @@
-import { prisma } from '@/db/client';
+import { prisma } from '../../db/client';
 import { Transaction, TransactionType } from '@prisma/client';
-import { logger } from '@/utils/logger';
+import { logger } from '../../utils/logger';
 
 export interface CreateTransactionData {
   accountId: string;

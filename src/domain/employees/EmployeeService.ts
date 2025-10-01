@@ -1,6 +1,6 @@
-import { prisma } from '@/db/client';
+import { prisma } from '../../db/client';
 import { Employee, EmployeeStatus } from '@prisma/client';
-import { logger } from '@/utils/logger';
+import { logger } from '../../utils/logger';
 
 export interface CreateEmployeeData {
   fullName: string;

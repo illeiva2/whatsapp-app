@@ -1,8 +1,8 @@
-import { prisma } from '@/db/client';
+import { prisma } from '../db/client';
 import { WhatsAppClient } from './WhatsAppClient';
-import { WHATSAPP_COPYS, formatCurrency, formatDate } from '@/domain/whatsapp/copy';
+import { WHATSAPP_COPYS, formatCurrency, formatDate } from '../domain/whatsapp/copy';
 import { TransactionType, TicketTopic } from '@prisma/client';
-import { logger } from '@/utils/logger';
+import { logger } from '../utils/logger';
 
 export interface ConversationState {
   phoneNumber: string;
