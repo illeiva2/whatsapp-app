@@ -1,0 +1,120 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Employee {
+  id          String   @id @default(cuid())
+  fullName    String
+  dni         String   @unique
+  phoneE164   String   @unique
+  employeeCode String  @unique
+  status      EmployeeStatus @default(ACTIVE)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  account     Account?
+  tickets     Ticket[]
+
+  @@map("employees")
+}
+
+model Account {
+  id            String    @id @default(cuid())
+  employeeId    String    @unique
+  closingDay    Int       @default(20) // Día del mes para cierre
+  lastClosingAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  employee      Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  transactions  Transaction[]
+  statements    Statement[]
+
+  @@map("accounts")
+}
+
+model Transaction {
+  id          String            @id @default(cuid())
+  accountId   String
+  type        TransactionType
+  description String
+  amountCents Int               // Positivo = débito, negativo = crédito
+  postedAt    DateTime
+  sourceRef   String?           // Referencia del sistema origen
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  account     Account           @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, postedAt])
+  @@map("transactions")
+}
+
+model Statement {
+  id                  String    @id @default(cuid())
+  accountId          String
+  periodStart        DateTime
+  periodEnd          DateTime
+  closingBalanceCents Int
+  pdfUrl             String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  // Relations
+  account            Account   @relation(fields: [accountId], references: [id], onDelete: Cascade)
+
+  @@index([accountId, periodEnd])
+  @@map("statements")
+}
+
+model Ticket {
+  id           String        @id @default(cuid())
+  employeeId   String
+  topic        TicketTopic
+  status       TicketStatus  @default(ABIERTO)
+  lastMessage  String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  employee     Employee      @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@map("tickets")
+}
+
+// Enums
+enum EmployeeStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+enum TransactionType {
+  PANADERIA
+  CARNICERIA
+  PROVEEDORES
+  ADELANTO
+}
+
+enum TicketTopic {
+  DISPUTA
+  CONSULTA
+  OTROS
+}
+
+enum TicketStatus {
+  ABIERTO
+  DERIVADO_RRHH
+  CERRADO
+}
