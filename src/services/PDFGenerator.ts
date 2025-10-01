@@ -56,7 +56,7 @@ export class PDFGenerator {
     }
   }
 
-  private async generatePDFContent(doc: PDFDocument, statement: StatementWithAccount): Promise<void> {
+  private async generatePDFContent(doc: any, statement: StatementWithAccount): Promise<void> {
     const { account, periodStart, periodEnd, closingBalanceCents } = statement;
     const { employee } = account;
     const companyName = process.env.COMPANY_NAME || 'Tu Empresa';
@@ -89,7 +89,7 @@ export class PDFGenerator {
     doc.text(`Generado el: ${formatDate(new Date())}`, { align: 'center' });
   }
 
-  private generateTransactionsTable(doc: PDFDocument, transactions: any[]): void {
+  private generateTransactionsTable(doc: any, transactions: any[]): void {
     const tableTop = doc.y;
     const itemHeight = 20;
     const pageHeight = doc.page.height;
@@ -163,7 +163,7 @@ export class PDFGenerator {
         if (i > 0) {
           doc.addPage();
         }
-        await this.generatePDFContent(doc, statements[i]);
+        await this.generatePDFContent(doc, statements[i]!);
       }
 
       doc.end();

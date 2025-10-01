@@ -74,7 +74,12 @@ export class AccountService {
       }, {} as Record<TransactionType, number>);
 
       // Obtener último cierre
-      const lastStatement = account.statements[0];
+      const statements = await prisma.statement.findMany({
+        where: { accountId: account.id },
+        orderBy: { periodEnd: 'desc' },
+        take: 1
+      });
+      const lastStatement = statements[0];
 
       return {
         account,
@@ -90,7 +95,7 @@ export class AccountService {
     }
   }
 
-  async getOpenPeriod(account: Account): Promise<{ start: Date; end: Date }> {
+  getOpenPeriod(account: Account): { start: Date; end: Date } {
     const now = new Date();
     
     if (account.lastClosingAt) {
@@ -100,19 +105,6 @@ export class AccountService {
         end: now
       };
     } else {
-      // Primer período desde la primera transacción
-      const firstTransaction = await prisma.transaction.findFirst({
-        where: { accountId: account.id },
-        orderBy: { postedAt: 'asc' }
-      });
-
-      if (firstTransaction) {
-        return {
-          start: firstTransaction.postedAt,
-          end: now
-        };
-      }
-
       // Sin transacciones, período actual
       return {
         start: new Date(now.getFullYear(), now.getMonth(), 1),

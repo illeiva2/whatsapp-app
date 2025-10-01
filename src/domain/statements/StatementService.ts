@@ -38,7 +38,7 @@ export class StatementService {
           periodStart: data.periodStart,
           periodEnd: data.periodEnd,
           closingBalanceCents: data.closingBalanceCents,
-          pdfUrl: data.pdfUrl
+          pdfUrl: data.pdfUrl || null
         }
       });
 

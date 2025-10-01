@@ -37,7 +37,7 @@ export class TransactionService {
           description: data.description,
           amountCents: data.amountCents,
           postedAt: data.postedAt,
-          sourceRef: data.sourceRef
+          sourceRef: data.sourceRef || null
         }
       });
 

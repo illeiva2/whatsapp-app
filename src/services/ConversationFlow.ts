@@ -70,11 +70,11 @@ export class ConversationFlow {
         break;
 
       case WHATSAPP_COPYS.CONVERSATION_STATES.SUMMARY:
-        await this.handleSummary(phoneNumber, messageText, data);
+        await this.showSummary(phoneNumber, data.employeeId);
         break;
 
       case WHATSAPP_COPYS.CONVERSATION_STATES.DETAIL_BY_CATEGORY:
-        await this.handleCategoryDetail(phoneNumber, messageText, data);
+        await this.showCategorySelection(phoneNumber, data.employeeId);
         break;
 
       case WHATSAPP_COPYS.CONVERSATION_STATES.DISPUTE_CHARGE:

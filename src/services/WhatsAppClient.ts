@@ -175,7 +175,7 @@ export class WhatsAppClient {
         document: {
           link: url,
           filename,
-          caption
+          caption: caption || undefined
         }
       };
 

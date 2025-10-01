@@ -31,7 +31,7 @@ export class TicketService {
         data: {
           employeeId: data.employeeId,
           topic: data.topic,
-          lastMessage: data.lastMessage,
+          lastMessage: data.lastMessage || null,
           status: data.status || TicketStatus.ABIERTO
         }
       });

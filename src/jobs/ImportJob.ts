@@ -5,7 +5,7 @@ import { TransactionService } from '@/domain/transactions/TransactionService';
 import { TransactionType } from '@prisma/client';
 import { logger } from '@/utils/logger';
 import * as fs from 'fs';
-import * as csv from 'csv-parser';
+import csv from 'csv-parser';
 
 export interface ImportJobData {
   filePath: string;
@@ -61,7 +61,7 @@ export class ImportJob {
     return new Promise((resolve, reject) => {
       fs.createReadStream(filePath)
         .pipe(csv())
-        .on('data', async (row) => {
+        .on('data', async (row: any) => {
           result.totalRows++;
           batch.push(row);
 
@@ -142,7 +142,7 @@ export class ImportJob {
     return new Promise((resolve, reject) => {
       fs.createReadStream(filePath)
         .pipe(csv())
-        .on('data', async (row) => {
+        .on('data', async (row: any) => {
           result.totalRows++;
           batch.push(row);
 
@@ -180,9 +180,20 @@ export class ImportJob {
 
         // Buscar empleado por código
         const employee = await this.employeeService.getEmployeeByCode(row.employeeCode);
-        if (!employee || !employee.account) {
+        if (!employee) {
           result.failedRows++;
           result.errors.push(`Employee not found: ${row.employeeCode}`);
+          continue;
+        }
+
+        // Obtener cuenta del empleado
+        const account = await prisma.account.findUnique({
+          where: { employeeId: employee.id }
+        });
+
+        if (!account) {
+          result.failedRows++;
+          result.errors.push(`Account not found for employee: ${row.employeeCode}`);
           continue;
         }
 
@@ -198,7 +209,7 @@ export class ImportJob {
 
         // Crear transacción
         await this.transactionService.createTransaction({
-          accountId: employee.account.id,
+          accountId: account.id,
           type: row.type,
           description: row.description,
           amountCents: amountCents,
@@ -244,7 +255,7 @@ export class ImportJob {
     return new Promise((resolve) => {
       fs.createReadStream(filePath)
         .pipe(csv())
-        .on('data', (row) => {
+        .on('data', (row: any) => {
           rowCount++;
           
           if (fileType === 'employees') {
@@ -272,7 +283,7 @@ export class ImportJob {
             rowCount
           });
         })
-        .on('error', (error) => {
+        .on('error', (error: any) => {
           resolve({
             isValid: false,
             errors: [`File read error: ${error.message}`],

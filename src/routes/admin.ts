@@ -40,7 +40,7 @@ const authenticateAdmin = (req: Request, res: Response, next: any) => {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
-  next();
+  return next();
 };
 
 // Aplicar autenticación a todas las rutas
@@ -90,7 +90,7 @@ router.post('/import/csv', upload.single('file'), async (req: Request, res: Resp
       fileType
     });
 
-    res.json({
+    return res.json({
       message: 'Import job queued',
       jobId: job.id,
       totalRows: validation.rowCount
@@ -98,7 +98,7 @@ router.post('/import/csv', upload.single('file'), async (req: Request, res: Resp
 
   } catch (error) {
     logger.error('Error importing CSV:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -115,7 +115,7 @@ router.post('/close-period', async (req: Request, res: Response) => {
       sendNotifications
     });
 
-    res.json({
+    return res.json({
       message: 'Close period job queued',
       jobId: job.id,
       closingDate: date
@@ -123,7 +123,7 @@ router.post('/close-period', async (req: Request, res: Response) => {
 
   } catch (error) {
     logger.error('Error queuing close period:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -139,7 +139,7 @@ router.post('/close-period/all', async (req: Request, res: Response) => {
       sendNotifications
     });
 
-    res.json({
+    return res.json({
       message: 'Close period job queued for all accounts',
       jobId: job.id,
       closingDate: date
@@ -147,7 +147,7 @@ router.post('/close-period/all', async (req: Request, res: Response) => {
 
   } catch (error) {
     logger.error('Error queuing bulk close period:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -155,6 +155,9 @@ router.post('/close-period/all', async (req: Request, res: Response) => {
 router.get('/employees/:id/summary', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'Employee ID is required' });
+    }
     const employee = await employeeService.getEmployeeById(id);
     
     if (!employee) {
@@ -163,7 +166,7 @@ router.get('/employees/:id/summary', async (req: Request, res: Response) => {
 
     const summary = await accountService.getAccountSummary(id);
     
-    res.json({
+    return res.json({
       employee: {
         id: employee.id,
         fullName: employee.fullName,
@@ -175,7 +178,7 @@ router.get('/employees/:id/summary', async (req: Request, res: Response) => {
 
   } catch (error) {
     logger.error('Error getting employee summary:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -183,6 +186,9 @@ router.get('/employees/:id/summary', async (req: Request, res: Response) => {
 router.get('/employees/by-phone/:phone/summary', async (req: Request, res: Response) => {
   try {
     const { phone } = req.params;
+    if (!phone) {
+      return res.status(400).json({ error: 'Phone number is required' });
+    }
     const employee = await employeeService.getEmployeeByPhone(phone);
     
     if (!employee) {
@@ -191,7 +197,7 @@ router.get('/employees/by-phone/:phone/summary', async (req: Request, res: Respo
 
     const summary = await accountService.getAccountSummary(employee.id);
     
-    res.json({
+    return res.json({
       employee: {
         id: employee.id,
         fullName: employee.fullName,
@@ -203,7 +209,7 @@ router.get('/employees/by-phone/:phone/summary', async (req: Request, res: Respo
 
   } catch (error) {
     logger.error('Error getting employee summary by phone:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -211,9 +217,12 @@ router.get('/employees/by-phone/:phone/summary', async (req: Request, res: Respo
 router.post('/tickets/:id/hand-over', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'Ticket ID is required' });
+    }
     const ticket = await ticketService.handoverToHR(id);
     
-    res.json({
+    return res.json({
       message: 'Ticket handed over to HR',
       ticket: {
         id: ticket.id,
@@ -223,7 +232,7 @@ router.post('/tickets/:id/hand-over', async (req: Request, res: Response) => {
 
   } catch (error) {
     logger.error('Error handing over ticket:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -231,6 +240,9 @@ router.post('/tickets/:id/hand-over', async (req: Request, res: Response) => {
 router.get('/employees/:id/export', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ error: 'Employee ID is required' });
+    }
     const employee = await employeeService.getEmployeeById(id);
     
     if (!employee) {
@@ -241,7 +253,7 @@ router.get('/employees/:id/export', async (req: Request, res: Response) => {
     const statements = await statementService.getStatementsByEmployee(id);
     const tickets = await ticketService.getTicketsByEmployee(id);
 
-    res.json({
+    return res.json({
       employee: {
         id: employee.id,
         fullName: employee.fullName,
@@ -271,7 +283,7 @@ router.get('/employees/:id/export', async (req: Request, res: Response) => {
 
   } catch (error) {
     logger.error('Error exporting employee data:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    return res.status(500).json({ error: 'Internal server error' });
   }
 });
 

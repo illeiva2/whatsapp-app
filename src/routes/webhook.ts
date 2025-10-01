@@ -47,10 +47,10 @@ router.post('/whatsapp', async (req: Request, res: Response) => {
       }
     }
 
-    res.status(200).send('OK');
+    return res.status(200).send('OK');
   } catch (error) {
     logger.error('Error processing webhook:', error);
-    res.status(500).send('Internal Server Error');
+    return res.status(500).send('Internal Server Error');
   }
 });
 

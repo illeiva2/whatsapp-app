@@ -16,7 +16,7 @@
     "format:check": "prettier --check src/**/*.ts",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
-    "db:seed": "tsx prisma/seed.ts",
+    "db:seed": "tsx --tsconfig prisma/tsconfig.json prisma/seed.ts",
     "db:studio": "prisma studio",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
@@ -70,5 +70,9 @@
   },
   "engines": {
     "node": ">=20.0.0"
-  }
+  },
+  "directories": {
+    "test": "tests"
+  },
+  "type": "commonjs"
 }
