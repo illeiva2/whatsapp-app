@@ -71,20 +71,46 @@ export class WhatsAppClient {
     });
   }
 
+  private normalizePhone(recipient: string): string {
+    // Mantener solo dígitos (E.164 sin '+')
+    const digitsOnly = (recipient || '').replace(/\D+/g, '');
+    return digitsOnly;
+  }
+
+  private logAxiosError(action: string, to: string, error: any): void {
+    const status = error?.response?.status;
+    const err = error?.response?.data?.error;
+    const code = err?.code;
+    const message = err?.message || error?.message;
+    const details = err?.error_data?.details;
+
+    if (code === 131030) {
+      // Número no autorizado en entorno de pruebas
+      // Mensaje guiado para diagnóstico rápido
+      return logger.error(
+        `[WA ${action}] 131030 Recipient not in allowed list → Agrega el número en Getting Started > Add recipients. to=${to}`,
+        { status, code, message, details }
+      );
+    }
+
+    logger.error(`[WA ${action}] error sending to ${to}`, { status, code, message, details });
+  }
+
   async sendText(to: string, body: string): Promise<boolean> {
     try {
+      const recipient = this.normalizePhone(to);
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
-        to,
+        to: recipient,
         type: 'text',
         text: { body }
       };
 
       await this.client.post('', message);
-      logger.info(`WhatsApp text sent to ${to}`);
+      logger.info(`WhatsApp text sent to ${recipient}`);
       return true;
     } catch (error) {
-      logger.error(`Failed to send WhatsApp text to ${to}:`, error);
+      this.logAxiosError('sendText', to, error);
       return false;
     }
   }
@@ -97,9 +123,10 @@ export class WhatsAppClient {
     footer?: string
   ): Promise<boolean> {
     try {
+      const recipient = this.normalizePhone(to);
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
-        to,
+        to: recipient,
         type: 'interactive',
         interactive: {
           type: 'button',
@@ -117,10 +144,10 @@ export class WhatsAppClient {
       }
 
       await this.client.post('', message);
-      logger.info(`WhatsApp buttons sent to ${to}`);
+      logger.info(`WhatsApp buttons sent to ${recipient}`);
       return true;
     } catch (error) {
-      logger.error(`Failed to send WhatsApp buttons to ${to}:`, error);
+      this.logAxiosError('sendButtons', to, error);
       return false;
     }
   }
@@ -133,9 +160,10 @@ export class WhatsAppClient {
     footer?: string
   ): Promise<boolean> {
     try {
+      const recipient = this.normalizePhone(to);
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
-        to,
+        to: recipient,
         type: 'interactive',
         interactive: {
           type: 'list',
@@ -153,10 +181,10 @@ export class WhatsAppClient {
       }
 
       await this.client.post('', message);
-      logger.info(`WhatsApp list sent to ${to}`);
+      logger.info(`WhatsApp list sent to ${recipient}`);
       return true;
     } catch (error) {
-      logger.error(`Failed to send WhatsApp list to ${to}:`, error);
+      this.logAxiosError('sendList', to, error);
       return false;
     }
   }
@@ -168,9 +196,10 @@ export class WhatsAppClient {
     caption?: string
   ): Promise<boolean> {
     try {
+      const recipient = this.normalizePhone(to);
       const message: WhatsAppDocument = {
         messaging_product: 'whatsapp',
-        to,
+        to: recipient,
         type: 'document',
         document: {
           link: url,
@@ -180,10 +209,10 @@ export class WhatsAppClient {
       };
 
       await this.client.post('', message);
-      logger.info(`WhatsApp document sent to ${to}: ${filename}`);
+      logger.info(`WhatsApp document sent to ${recipient}: ${filename}`);
       return true;
     } catch (error) {
-      logger.error(`Failed to send WhatsApp document to ${to}:`, error);
+      this.logAxiosError('sendDocument', to, error);
       return false;
     }
   }
@@ -195,9 +224,10 @@ export class WhatsAppClient {
     components?: any[]
   ): Promise<boolean> {
     try {
+      const recipient = this.normalizePhone(to);
       const message = {
         messaging_product: 'whatsapp',
-        to,
+        to: recipient,
         type: 'template',
         template: {
           name: templateName,
@@ -207,10 +237,10 @@ export class WhatsAppClient {
       };
 
       await this.client.post('', message);
-      logger.info(`WhatsApp template sent to ${to}: ${templateName}`);
+      logger.info(`WhatsApp template sent to ${recipient}: ${templateName}`);
       return true;
     } catch (error) {
-      logger.error(`Failed to send WhatsApp template to ${to}:`, error);
+      this.logAxiosError('sendTemplate', to, error);
       return false;
     }
   }
