@@ -18,6 +18,9 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Detrás de proxy (Render, Nginx, etc.) para que express-rate-limit use X-Forwarded-For
+app.set('trust proxy', 1);
+
 // Configurar middleware de seguridad
 app.use(helmet());
 app.use(cors());
@@ -114,12 +117,14 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Iniciar servidor
-app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT}`);
-  logger.info(`📱 WhatsApp webhook: http://localhost:${PORT}/webhook/whatsapp`);
-  logger.info(`🔧 Admin API: http://localhost:${PORT}/admin`);
-  logger.info(`❤️  Health check: http://localhost:${PORT}/health`);
-});
+// Iniciar servidor (evitar levantar puerto durante tests)
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(PORT, () => {
+    logger.info(`🚀 Server running on port ${PORT}`);
+    logger.info(`📱 WhatsApp webhook: http://localhost:${PORT}/webhook/whatsapp`);
+    logger.info(`🔧 Admin API: http://localhost:${PORT}/admin`);
+    logger.info(`❤️  Health check: http://localhost:${PORT}/health`);
+  });
+}
 
 export default app;

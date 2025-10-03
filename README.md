@@ -71,7 +71,16 @@ Editar `.env` con tus credenciales:
 DATABASE_URL="postgresql://postgres:password@localhost:5432/whatsapp_accounts"
 
 # Redis
+# Puedes usar URL o variables separadas. Si tu Redis requiere auth o TLS:
+# - Usa URL con credenciales: redis://usuario:password@host:6379
+# - O configura las variables individuales debajo
 REDIS_URL="redis://localhost:6379"
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+REDIS_USERNAME=
+REDIS_PASSWORD=
+REDIS_TLS=false
 
 # WhatsApp Business Cloud API
 WHATSAPP_TOKEN="tu_token_de_whatsapp"

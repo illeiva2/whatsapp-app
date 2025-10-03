@@ -12,7 +12,34 @@ export class QueueManager {
   private workers: Map<string, Worker> = new Map();
 
   constructor() {
-    this.redis = new IORedis(process.env.REDIS_URL || 'redis://localhost:6379');
+    const redisUrl = process.env.REDIS_URL;
+
+    const commonOptions = {
+      // Requerido por BullMQ para evitar reintentos automáticos a bajo nivel
+      // Ver aviso: "maxRetriesPerRequest must be null"
+      maxRetriesPerRequest: null as null,
+      enableReadyCheck: true,
+      // Soporte opcional para TLS
+      tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
+      // Autenticación por variables (además de soportar credenciales en la URL)
+      username: process.env.REDIS_USERNAME || undefined,
+      password: process.env.REDIS_PASSWORD || undefined,
+    };
+
+    if (redisUrl) {
+      this.redis = new IORedis(redisUrl, commonOptions);
+    } else {
+      const host = process.env.REDIS_HOST || 'localhost';
+      const port = Number(process.env.REDIS_PORT || 6379);
+      const db = Number(process.env.REDIS_DB || 0);
+
+      this.redis = new IORedis({
+        host,
+        port,
+        db,
+        ...commonOptions,
+      });
+    }
   }
 
   createQueue(name: string): Queue {

@@ -2,8 +2,9 @@ import { EmployeeService } from '@/domain/employees/EmployeeService';
 import { prisma } from '@/db/client';
 import { EmployeeStatus } from '@prisma/client';
 
-// Mock de Prisma
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+// Mock de Prisma (forzamos tipo any para habilitar métodos de jest como mockResolvedValue)
+// En tests, el cliente es mockeado en tests/setup.ts, así que aquí podemos castear a any de forma segura
+const mockPrisma = prisma as any;
 
 describe('EmployeeService', () => {
   let employeeService: EmployeeService;

@@ -63,7 +63,7 @@ export class WhatsAppClient {
     this.phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID!;
     
     this.client = axios.create({
-      baseURL: `https://graph.facebook.com/v18.0/${this.phoneNumberId}/messages`,
+      baseURL: `https://graph.facebook.com/v23.0/${this.phoneNumberId}/messages`,
       headers: {
         'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
         'Content-Type': 'application/json',
