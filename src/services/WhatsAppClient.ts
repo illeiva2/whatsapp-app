@@ -87,7 +87,7 @@ export class WhatsAppClient {
     if (code === 131030) {
       // Número no autorizado en entorno de pruebas
       // Mensaje guiado para diagnóstico rápido
-      return logger.error(
+      logger.error(
         `[WA ${action}] 131030 Recipient not in allowed list → Agrega el número en Getting Started > Add recipients. to=${to}`,
         { status, code, message, details }
       );
