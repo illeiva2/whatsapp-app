@@ -24,10 +24,10 @@ export const WHATSAPP_COPYS = {
   
   // Resumen de cuenta
   SUMMARY_HEADER: "Resumen de tu cuenta",
-  SUMMARY_LAST_CLOSING: "• Último cierre: {{lastClosingDate}} – Saldo cierre: ${{closingBalance}}",
+  SUMMARY_LAST_CLOSING: "• Último cierre: {{lastClosingDate}} – Saldo cierre: {{closingBalance}}",
   SUMMARY_OPEN_PERIOD: "• Período abierto: {{periodStart}} → hoy",
-  SUMMARY_TOTALS: "• Totales: Panadería ${{pan}}, Carnicería ${{car}}, Proveedores ${{prov}}, Adelantos ${{adel}}",
-  SUMMARY_CURRENT: "Saldo actual estimado: ${{currentBalance}}",
+  SUMMARY_TOTALS: "• Totales: Panadería {{pan}}, Carnicería {{car}}, Proveedores {{prov}}, Adelantos {{adel}}",
+  SUMMARY_CURRENT: "Saldo actual estimado: {{currentBalance}}",
   
   // Detalle por categoría
   CATEGORY_SELECT: "Elegí la categoría que querés ver:",
@@ -63,6 +63,7 @@ export const WHATSAPP_COPYS = {
   ERROR_NOT_FOUND: "No se encontró información. Verificá que estés registrado o contactá a RR. HH.",
   ERROR_INVALID_DNI: "El DNI debe tener solo números. Intentá de nuevo.",
   ERROR_INVALID_OPTION: "Opción no válida. Elegí una de las opciones disponibles.",
+  ERROR_ALREADY_LINKED: "Este empleado ya está vinculado a otro número de WhatsApp. Contactá a RR. HH. para verificar tu acceso.",
   
   // Estados de conversación
   CONVERSATION_STATES: {

@@ -95,6 +95,23 @@ export class ConversationFlow {
           await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_GENERAL);
           return;
         }
+        // Verificar que el empleado no tenga teléfono asignado (seguridad)
+        const employee = await prisma.employee.findUnique({
+          where: { id: employeeId },
+          select: { id: true, phoneE164: true }
+        });
+
+        if (!employee) {
+          await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_NOT_FOUND);
+          return;
+        }
+
+        if (employee.phoneE164 && employee.phoneE164 !== phoneNumber) {
+          // El empleado ya tiene otro teléfono asignado
+          await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_ALREADY_LINKED);
+          return;
+        }
+
         // Vincular teléfono al empleado y continuar al menú
         await prisma.employee.update({
           where: { id: employeeId },
@@ -122,11 +139,19 @@ export class ConversationFlow {
 
     // Buscar empleado por DNI
     const employee = await prisma.employee.findUnique({
-      where: { dni }
+      where: { dni },
+      select: { id: true, fullName: true, dni: true, phoneE164: true }
     });
 
     if (!employee) {
       await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_NOT_FOUND);
+      return;
+    }
+
+    // Verificar que el empleado no tenga teléfono asignado (seguridad)
+    if (employee.phoneE164 && employee.phoneE164 !== phoneNumber) {
+      // El empleado ya tiene otro teléfono asignado
+      await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_ALREADY_LINKED);
       return;
     }
 
@@ -157,6 +182,18 @@ export class ConversationFlow {
       await this.startDispute(phoneNumber, employeeId);
     } else if (messageText === 'MENU_HANDOVER' || messageText.toLowerCase().includes('hablar')) {
       await this.handoverToHR(phoneNumber, employeeId);
+    } else if (messageText === 'CAT_PANADERIA' || messageText.toLowerCase().includes('panader')) {
+      await this.showCategoryDetail(phoneNumber, employeeId, 'PANADERIA');
+      await this.showMainMenu(phoneNumber, employeeId);
+    } else if (messageText === 'CAT_CARNICERIA' || messageText.toLowerCase().includes('carnicer')) {
+      await this.showCategoryDetail(phoneNumber, employeeId, 'CARNICERIA');
+      await this.showMainMenu(phoneNumber, employeeId);
+    } else if (messageText === 'CAT_PROVEEDORES' || messageText.toLowerCase().includes('proveedor')) {
+      await this.showCategoryDetail(phoneNumber, employeeId, 'PROVEEDORES');
+      await this.showMainMenu(phoneNumber, employeeId);
+    } else if (messageText === 'CAT_ADELANTO' || messageText.toLowerCase().includes('adelanto')) {
+      await this.showCategoryDetail(phoneNumber, employeeId, 'ADELANTO');
+      await this.showMainMenu(phoneNumber, employeeId);
     } else {
       // Mostrar menú principal
       await this.showMainMenu(phoneNumber, employeeId);
@@ -188,14 +225,7 @@ export class ConversationFlow {
         where: { employeeId },
         include: {
           employee: true,
-          transactions: {
-            where: {
-              postedAt: {
-                gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-              }
-            },
-            orderBy: { postedAt: 'desc' }
-          },
+          transactions: true,
           statements: {
             orderBy: { periodEnd: 'desc' },
             take: 1
@@ -208,13 +238,7 @@ export class ConversationFlow {
         return;
       }
 
-      // Calcular totales por categoría
-      const categoryTotals = account.transactions.reduce((totals, transaction) => {
-        totals[transaction.type] = (totals[transaction.type] || 0) + transaction.amountCents;
-        return totals;
-      }, {} as Record<TransactionType, number>);
-
-      // Calcular saldo actual
+      // Calcular saldo actual general (todas las transacciones)
       const currentBalance = account.transactions.reduce((sum, t) => sum + t.amountCents, 0);
       const lastStatement = account.statements[0];
 
@@ -229,12 +253,6 @@ export class ConversationFlow {
       summaryText += WHATSAPP_COPYS.SUMMARY_OPEN_PERIOD
         .replace('{{periodStart}}', formatDate(new Date(new Date().getFullYear(), new Date().getMonth(), 1)))
         .replace('hoy', formatDate(new Date())) + '\n';
-
-      summaryText += WHATSAPP_COPYS.SUMMARY_TOTALS
-        .replace('{{pan}}', formatCurrency(categoryTotals.PANADERIA || 0))
-        .replace('{{car}}', formatCurrency(categoryTotals.CARNICERIA || 0))
-        .replace('{{prov}}', formatCurrency(categoryTotals.PROVEEDORES || 0))
-        .replace('{{adel}}', formatCurrency(categoryTotals.ADELANTO || 0)) + '\n';
 
       summaryText += WHATSAPP_COPYS.SUMMARY_CURRENT
         .replace('{{currentBalance}}', formatCurrency(currentBalance));
@@ -260,6 +278,54 @@ export class ConversationFlow {
       WHATSAPP_COPYS.CATEGORY_SELECT,
       buttons
     );
+  }
+
+  private async showCategoryDetail(
+    phoneNumber: string,
+    employeeId: string,
+    category: 'PANADERIA' | 'CARNICERIA' | 'PROVEEDORES' | 'ADELANTO'
+  ): Promise<void> {
+    try {
+      const transactions = await prisma.transaction.findMany({
+        where: {
+          account: { employeeId },
+          type: category as any
+        },
+        orderBy: { postedAt: 'desc' },
+        take: 20
+      });
+
+      if (!transactions.length) {
+        await this.whatsappClient.sendText(
+          phoneNumber,
+          WHATSAPP_COPYS.CATEGORY_DETAIL_TOTAL
+            .replace('{{category}}', WHATSAPP_COPYS.CATEGORY_OPTIONS[category])
+            .replace('{{total}}', formatCurrency(0))
+        );
+        return;
+      }
+
+      const header = WHATSAPP_COPYS.CATEGORY_DETAIL_HEADER
+        .replace('{{category}}', WHATSAPP_COPYS.CATEGORY_OPTIONS[category]);
+
+      const lines = transactions.map(t =>
+        WHATSAPP_COPYS.CATEGORY_DETAIL_ITEM
+          .replace('{{date}}', formatDate(t.postedAt))
+          .replace('{{desc}}', t.description || 'Movimiento')
+          .replace('{{amount}}', formatCurrency(t.amountCents))
+      );
+
+      const total = transactions.reduce((sum, t) => sum + t.amountCents, 0);
+      const footer = WHATSAPP_COPYS.CATEGORY_DETAIL_TOTAL
+        .replace('{{category}}', WHATSAPP_COPYS.CATEGORY_OPTIONS[category])
+        .replace('{{total}}', formatCurrency(total));
+
+      const body = [header, ...lines, '', footer].join('\n');
+      await this.whatsappClient.sendText(phoneNumber, body);
+    } catch (error) {
+      logger.error(`Error showing ${category} detail for ${phoneNumber}:`, error);
+      await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_GENERAL);
+    }
   }
 
   private async sendStatementPDF(phoneNumber: string, employeeId: string): Promise<void> {
@@ -291,15 +357,23 @@ export class ConversationFlow {
   }
 
   private async startDispute(phoneNumber: string, employeeId: string): Promise<void> {
+    // Guardar estado temporal de disputa en memoria (simple, por teléfono)
+    ConversationFlowTempState.setDisputeAwaitingText(phoneNumber, { employeeId });
     await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.DISPUTE_REQUEST);
   }
 
   private async handleDispute(phoneNumber: string, messageText: string, data: any): Promise<void> {
     try {
+      // Si no hay estado temporal (usuario escribió 'disputar' y luego texto fuera de flujo), intentar recuperar
+      const pending = ConversationFlowTempState.getDisputeAwaitingText(phoneNumber) || { employeeId: data?.employeeId };
+      if (!pending?.employeeId) {
+        await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_GENERAL);
+        return;
+      }
       // Crear ticket de disputa
       const ticket = await prisma.ticket.create({
         data: {
-          employeeId: data.employeeId,
+          employeeId: pending.employeeId,
           topic: TicketTopic.DISPUTA,
           lastMessage: messageText
         }
@@ -309,6 +383,7 @@ export class ConversationFlow {
         .replace('{{ticketId}}', ticket.id);
 
       await this.whatsappClient.sendText(phoneNumber, confirmText);
+      ConversationFlowTempState.clearDisputeAwaitingText(phoneNumber);
 
     } catch (error) {
       logger.error(`Error creating dispute ticket for ${phoneNumber}:`, error);
@@ -335,3 +410,17 @@ export class ConversationFlow {
     }
   }
 }
+
+// Estado temporal en memoria (por simplicidad). En producción conviene Redis/DB.
+const ConversationFlowTempState = {
+  disputeAwaitingByPhone: new Map<string, { employeeId: string }>(),
+  setDisputeAwaitingText(phone: string, data: { employeeId: string }) {
+    this.disputeAwaitingByPhone.set(phone, data);
+  },
+  getDisputeAwaitingText(phone: string) {
+    return this.disputeAwaitingByPhone.get(phone);
+  },
+  clearDisputeAwaitingText(phone: string) {
+    this.disputeAwaitingByPhone.delete(phone);
+  }
+};
