@@ -199,7 +199,7 @@ export class WhatsAppClient {
         interactive: {
           type: 'list',
           body: { text: body },
-          action: { sections }
+          action: { sections, button: 'Ver opciones' }
         }
       };
 
