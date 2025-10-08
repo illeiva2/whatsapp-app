@@ -18,7 +18,6 @@ export const WHATSAPP_COPYS = {
   MENU_OPTIONS: {
     SUMMARY: "Ver resumen",
     DETAIL: "Detalle por categoría", 
-    PDF: "Recibir PDF último cierre",
     DISPUTE: "Disputar un cargo",
     HANDOVER: "Hablar con RR. HH."
   },

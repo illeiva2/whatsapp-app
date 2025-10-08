@@ -81,6 +81,56 @@ export class WhatsAppClient {
     });
   }
 
+  // --- Helpers de sanitización para cumplir límites de WhatsApp ---
+  private truncate(text: string | undefined, max: number): string | undefined {
+    if (typeof text !== 'string') return text;
+    return text.length > max ? text.slice(0, max) : text;
+  }
+
+  private sanitizeListSections(sections: WhatsAppListSection[] | undefined): WhatsAppListSection[] {
+    const MAX_SECTIONS = 10;
+    const MAX_ROWS_PER_SECTION = 10;
+    const MAX_SECTION_TITLE = 24;
+    const MAX_ROW_TITLE = 24;
+    const MAX_ROW_DESC = 72;
+
+    const safeSections = (sections || []).slice(0, MAX_SECTIONS).map(section => {
+      const safeTitle = this.truncate(section.title, MAX_SECTION_TITLE) || '';
+      const safeRows = (section.rows || []).slice(0, MAX_ROWS_PER_SECTION).map(row => ({
+        id: row.id, // id sin truncar para que coincida con lo esperado en backend
+        title: this.truncate(row.title, MAX_ROW_TITLE) || '',
+        description: this.truncate(row.description, MAX_ROW_DESC)
+      }));
+      return { title: safeTitle, rows: safeRows };
+    });
+
+    return safeSections;
+  }
+
+  private sanitizeListButtonLabel(label: string | undefined): string {
+    const MAX_BUTTON_TEXT = 20;
+    const base = label && label.trim().length > 0 ? label : 'Ver opciones';
+    return this.truncate(base, MAX_BUTTON_TEXT) as string;
+  }
+
+  private sanitizeInteractiveBody(body: string): string {
+    const MAX_BODY = 1024;
+    return this.truncate(body, MAX_BODY) as string;
+  }
+
+  private sanitizeButtons(buttons: WhatsAppButton[] | undefined): WhatsAppInteractiveButtonItem[] {
+    // WhatsApp permite hasta 3 botones, y cada título <= 20 chars
+    const MAX_BUTTONS = 3;
+    const MAX_BUTTON_TITLE = 20;
+    return (buttons || []).slice(0, MAX_BUTTONS).map(b => ({
+      type: 'reply',
+      reply: {
+        id: b.id,
+        title: this.truncate(b.title, MAX_BUTTON_TITLE) || ''
+      }
+    }));
+  }
+
   private normalizePhone(recipient: string): string {
     // Mantener solo dígitos (E.164 sin '+')
     const digitsOnly = (recipient || '').replace(/\D+/g, '');
@@ -125,11 +175,12 @@ export class WhatsAppClient {
   async sendText(to: string, body: string): Promise<boolean> {
     try {
       const recipient = this.normalizePhone(to);
+      const safeBody = this.sanitizeInteractiveBody(body);
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
         to: recipient,
         type: 'text',
-        text: { body }
+        text: { body: safeBody }
       };
 
       await this.client.post('', message);
@@ -150,18 +201,16 @@ export class WhatsAppClient {
   ): Promise<boolean> {
     try {
       const recipient = this.normalizePhone(to);
-      // Adaptar botones simples {id, title} al formato esperado por la API
-      const apiButtons: WhatsAppInteractiveButtonItem[] = (buttons || []).map(b => ({
-        type: 'reply',
-        reply: { id: b.id, title: b.title }
-      }));
+      // Adaptar y sanitizar botones al formato esperado por la API
+      const apiButtons: WhatsAppInteractiveButtonItem[] = this.sanitizeButtons(buttons);
+      const safeBody = this.sanitizeInteractiveBody(body);
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
         to: recipient,
         type: 'interactive',
         interactive: {
           type: 'button',
-          body: { text: body },
+          body: { text: safeBody },
           action: { buttons: apiButtons }
         }
       };
@@ -192,14 +241,17 @@ export class WhatsAppClient {
   ): Promise<boolean> {
     try {
       const recipient = this.normalizePhone(to);
+      const safeBody = this.sanitizeInteractiveBody(body);
+      const safeSections = this.sanitizeListSections(sections);
+      const safeButton = this.sanitizeListButtonLabel('Ver opciones');
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
         to: recipient,
         type: 'interactive',
         interactive: {
           type: 'list',
-          body: { text: body },
-          action: { sections, button: 'Ver opciones' }
+          body: { text: safeBody },
+          action: { sections: safeSections, button: safeButton }
         }
       };
 

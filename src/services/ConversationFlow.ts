@@ -153,8 +153,6 @@ export class ConversationFlow {
       await this.showSummary(phoneNumber, employeeId);
     } else if (messageText === 'MENU_DETAIL' || messageText.toLowerCase().includes('detalle')) {
       await this.showCategorySelection(phoneNumber, employeeId);
-    } else if (messageText === 'MENU_PDF' || messageText.toLowerCase().includes('pdf')) {
-      await this.sendStatementPDF(phoneNumber, employeeId);
     } else if (messageText === 'MENU_DISPUTE' || messageText.toLowerCase().includes('disputar')) {
       await this.startDispute(phoneNumber, employeeId);
     } else if (messageText === 'MENU_HANDOVER' || messageText.toLowerCase().includes('hablar')) {
@@ -171,7 +169,6 @@ export class ConversationFlow {
       rows: [
         { id: 'MENU_SUMMARY', title: WHATSAPP_COPYS.MENU_OPTIONS.SUMMARY },
         { id: 'MENU_DETAIL', title: WHATSAPP_COPYS.MENU_OPTIONS.DETAIL },
-        { id: 'MENU_PDF', title: WHATSAPP_COPYS.MENU_OPTIONS.PDF },
         { id: 'MENU_DISPUTE', title: WHATSAPP_COPYS.MENU_OPTIONS.DISPUTE },
         { id: 'MENU_HANDOVER', title: WHATSAPP_COPYS.MENU_OPTIONS.HANDOVER }
       ]
