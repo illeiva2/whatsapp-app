@@ -62,7 +62,7 @@ export class ConversationFlow {
 
     switch (currentState) {
       case WHATSAPP_COPYS.CONVERSATION_STATES.NEW_OR_UNIDENTIFIED:
-        await this.handleNewUser(phoneNumber, messageText);
+        await this.handleNewUser(phoneNumber, messageText, messageType);
         break;
 
       case WHATSAPP_COPYS.CONVERSATION_STATES.MAIN_MENU:
@@ -86,8 +86,34 @@ export class ConversationFlow {
     }
   }
 
-  private async handleNewUser(phoneNumber: string, messageText: string): Promise<void> {
-    // Validar DNI
+  private async handleNewUser(phoneNumber: string, messageText: string, messageType: string): Promise<void> {
+    // Si viene de un botón interactivo, procesar confirmación de identidad
+    if (messageType === 'interactive') {
+      if (messageText?.startsWith('CONFIRM_YES:')) {
+        const employeeId = messageText.split(':')[1];
+        if (!employeeId) {
+          await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_GENERAL);
+          return;
+        }
+        // Vincular teléfono al empleado y continuar al menú
+        await prisma.employee.update({
+          where: { id: employeeId },
+          data: { phoneE164: phoneNumber }
+        });
+        await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.IDENTITY_CONFIRMED);
+        await this.showMainMenu(phoneNumber, employeeId);
+        return;
+      }
+      if (messageText === 'CONFIRM_NO') {
+        await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.IDENTITY_DENIED);
+        return;
+      }
+      // Si es interactivo pero no es confirmación reconocida, pedir DNI nuevamente
+      await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_INVALID_DNI);
+      return;
+    }
+
+    // Para texto libre: esperar DNI de 7-8 dígitos
     const dni = messageText.trim();
     if (!/^\d{7,8}$/.test(dni)) {
       await this.whatsappClient.sendText(phoneNumber, WHATSAPP_COPYS.ERROR_INVALID_DNI);
@@ -105,7 +131,6 @@ export class ConversationFlow {
     }
 
     // Confirmar identidad
-    const companyName = process.env.COMPANY_NAME || 'Tu Empresa';
     const confirmText = WHATSAPP_COPYS.CONFIRM_IDENTITY
       .replace('{{fullName}}', employee.fullName)
       .replace('{{dniLast3}}', employee.dni.slice(-3));
@@ -114,7 +139,7 @@ export class ConversationFlow {
       phoneNumber,
       confirmText,
       [
-        { id: 'CONFIRM_YES', title: WHATSAPP_COPYS.CONFIRM_YES },
+        { id: `CONFIRM_YES:${employee.id}`, title: WHATSAPP_COPYS.CONFIRM_YES },
         { id: 'CONFIRM_NO', title: WHATSAPP_COPYS.CONFIRM_NO }
       ]
     );
