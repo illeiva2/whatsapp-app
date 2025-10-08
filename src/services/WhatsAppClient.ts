@@ -6,6 +6,15 @@ export interface WhatsAppButton {
   title: string;
 }
 
+// Formato requerido por la API de WhatsApp para botones interactivos
+interface WhatsAppInteractiveButtonItem {
+  type: 'reply';
+  reply: {
+    id: string;
+    title: string;
+  };
+}
+
 export interface WhatsAppListRow {
   id: string;
   title: string;
@@ -37,7 +46,8 @@ export interface WhatsAppMessage {
       text: string;
     };
     action: {
-      buttons?: WhatsAppButton[];
+      // La API espera botones en formato { type: 'reply', reply: { id, title } }
+      buttons?: WhatsAppInteractiveButtonItem[];
       button?: string;
       sections?: WhatsAppListSection[];
     };
@@ -84,11 +94,27 @@ export class WhatsAppClient {
     const message = err?.message || error?.message;
     const details = err?.error_data?.details;
 
+    if (code === 100 && typeof message === 'string' && message.includes("Unexpected key \"id\"") ) {
+      // Parámetros de botones mal formados (API espera { type: 'reply', reply: { id, title } })
+      logger.error(
+        `[WA ${action}] 100 Invalid param → Formato de botones inválido. Usa { type: 'reply', reply: { id, title } } en interactive.action.buttons. to=${to}`,
+        { status, code, message, details }
+      );
+    }
+
     if (code === 131030) {
       // Número no autorizado en entorno de pruebas
       // Mensaje guiado para diagnóstico rápido
       logger.error(
         `[WA ${action}] 131030 Recipient not in allowed list → Agrega el número en Getting Started > Add recipients. to=${to}`,
+        { status, code, message, details }
+      );
+    }
+
+    if (code === 10) {
+      // Permisos insuficientes (token o app)
+      logger.error(
+        `[WA ${action}] 10 Permission error → Revisa: (1) WHATSAPP_TOKEN vigente, (2) que la app tenga whatsapp_business_messaging, (3) WHATSAPP_PHONE_NUMBER_ID correcto, (4) en modo prueba agrega el destinatario en Add recipients. to=${to}`,
         { status, code, message, details }
       );
     }
@@ -124,6 +150,11 @@ export class WhatsAppClient {
   ): Promise<boolean> {
     try {
       const recipient = this.normalizePhone(to);
+      // Adaptar botones simples {id, title} al formato esperado por la API
+      const apiButtons: WhatsAppInteractiveButtonItem[] = (buttons || []).map(b => ({
+        type: 'reply',
+        reply: { id: b.id, title: b.title }
+      }));
       const message: WhatsAppMessage = {
         messaging_product: 'whatsapp',
         to: recipient,
@@ -131,7 +162,7 @@ export class WhatsAppClient {
         interactive: {
           type: 'button',
           body: { text: body },
-          action: { buttons }
+          action: { buttons: apiButtons }
         }
       };
 
